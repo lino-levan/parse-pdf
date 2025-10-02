@@ -1,5 +1,8 @@
 import { assertEquals } from "@std/assert";
-import parsePdf from "./mod.ts";
+import parsePdf, { type Annotation } from "./mod.ts";
+
+const sortByUrl = (a: Annotation, b: Annotation) =>
+  (a.url ?? "").localeCompare(b.url ?? "");
 
 const expectedText = `Hyphenator.js
 Overview
@@ -73,6 +76,85 @@ Douglas Crockford for making Javascript a programming language
 Vyacheslav Egorov for his deep insights to V8
 Bram Stein for his initiative on web typography`;
 
+const expectedTotalAnnotations = [
+  {
+    url: "http://mnater.github.io/Hyphenator/testsuite/",
+  },
+  {
+    url: "https://github.com/mnater/Hyphenator/issues",
+  },
+  {
+    url: "https://github.com/mnater/Hyphenator/issues",
+  },
+  {
+    url: "http://www.tug.org/docs/liang/",
+  },
+  {
+    url: "http://www.crockford.com/",
+  },
+  {
+    url: "http://mrale.ph/",
+  },
+  {
+    url: "http://stateofwebtype.com/",
+  },
+  {
+    url: undefined,
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_HowToUseHyphenator.md#using-hyphenator-on-your-website",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_HowToUseHyphenator.md#using-hyphenator-as-a-bookmarklet",
+  },
+  {
+    url: "http://en.wikipedia.org/wiki/Unobtrusive_JavaScript",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_HowToUseHyphenator.md#hyphenator_loaderjs",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_PublicAPI.md#public-api",
+  },
+  {
+    url: "http://www.tug.org/docs/liang/liang-thesis.pdf",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_AddNewLanguage.md#what-we-have-now",
+  },
+  {
+    url: "http://mnater.github.io/Hyphenator/mergeAndPack.html",
+  },
+  {
+    url: "http://mnater.github.io/Hyphenator/LICENSE.txt",
+  },
+  {
+    url: "https://github.com/mnater/Hyphenator",
+  },
+  {
+    url: "https://github.com/mnater/Hyphenator/releases/latest",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_TableOfContents.md#table-of-contents",
+  },
+  {
+    url: "https://github.com/mnater/Hyphenator/releases/latest",
+  },
+  {
+    url: "http://mnater.github.io/Hyphenator/mergeAndPack.html",
+  },
+  {
+    url:
+      "https://github.com/mnater/Hyphenator/blob/wiki/en_HowToUseHyphenator.md#using-hyphenator-on-your-website",
+  },
+];
+
 Deno.test("Parse remote PDF should work", async () => {
   const { text, info, metadata, numPages } = await parsePdf(
     "https://github.com/mozilla/pdf.js/files/1340729/Hyphenator.pdf",
@@ -123,4 +205,31 @@ Deno.test("Parse local PDF should work", async () => {
     CreationDate: "D:20170928110031+00'00'",
     ModDate: "D:20170928110031+00'00'",
   });
+});
+
+Deno.test("Parse local PDF should work including annotations", async () => {
+  const { annotations } = await parsePdf(
+    Deno.readFileSync(
+      new URL(import.meta.resolve("./test_data/Hyphenator.pdf")),
+    ),
+    { includeAnnotations: true, maxPages: 1 },
+  );
+
+  assertEquals(
+    annotations.length,
+    15,
+  );
+
+  const { annotations: allAnnotations } = await parsePdf(
+    Deno.readFileSync(
+      new URL(import.meta.resolve("./test_data/Hyphenator.pdf")),
+    ),
+    { includeAnnotations: true },
+  );
+
+  assertEquals(allAnnotations.length, expectedTotalAnnotations.length);
+  assertEquals(
+    allAnnotations.toSorted(sortByUrl),
+    expectedTotalAnnotations.toSorted(sortByUrl),
+  );
 });

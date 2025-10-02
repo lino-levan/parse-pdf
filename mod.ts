@@ -1,12 +1,17 @@
 import { getDocument } from "pdfjs/legacy/build/pdf.min.mjs";
 import type { Metadata } from "pdfjs/types/pdf.d.ts";
 
+export interface Annotation {
+  url?: string;
+}
+
 /** The parsed pdf object which has a number of pages, the raw pdf info, the pdf metadata, and the text from the pdf */
-export interface ParsedPdf {
+export interface ParsedPdf<T = false> {
   numPages: number;
   info: object | null;
   metadata: Metadata | null;
   text: string;
+  annotations: T extends true ? Annotation[] : undefined;
 }
 
 type TypedArray =
@@ -27,10 +32,10 @@ type TypedArray =
  * @param options.maxPages - Maximum number of pages to process (defaults to all pages)
  * @returns Promise that resolves to ParsedPdf object containing pages count, info, metadata, and extracted text
  */
-export default async function parsePdf(
+export default async function parsePdf<T extends boolean = false>(
   rawDoc: ArrayBuffer | TypedArray | string | URL,
-  options?: { maxPages?: number },
-): Promise<ParsedPdf> {
+  options?: { maxPages?: number; includeAnnotations?: T },
+): Promise<ParsedPdf<T>> {
   const doc = await getDocument({
     url: typeof rawDoc === "string" || rawDoc instanceof URL
       ? rawDoc
@@ -45,6 +50,7 @@ export default async function parsePdf(
     return { metadata: null, info: null };
   });
 
+  const annotations: Annotation[] = [];
   const pagePromises = [];
   const iteratedPageCount = Math.min(
     options?.maxPages ?? Infinity,
@@ -56,6 +62,14 @@ export default async function parsePdf(
         const pageProxy = await doc.getPage(i);
         const textContent = await pageProxy.getTextContent();
 
+        if (options?.includeAnnotations) {
+          const pageAnnotations = await pageProxy.getAnnotations();
+          for (const annotation of pageAnnotations) {
+            annotations.push({
+              url: annotation.url,
+            });
+          }
+        }
         let text = "";
         let lastY: number | undefined;
         for (const item of textContent.items) {
@@ -74,6 +88,10 @@ export default async function parsePdf(
     })());
   }
 
+  // if (options?.includeAnnotations) {
+  //   pagePromises.push(
+  // }
+
   const pageTexts = await Promise.all(pagePromises);
 
   return {
@@ -81,5 +99,9 @@ export default async function parsePdf(
     info,
     metadata,
     text: pageTexts.join("\n"),
+    annotations:
+      (options?.includeAnnotations ? annotations : undefined) as T extends true
+        ? Annotation[]
+        : undefined,
   };
 }
