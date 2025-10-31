@@ -4,7 +4,8 @@ import parsePdf, { type Annotation } from "./mod.ts";
 const sortByUrl = (a: Annotation, b: Annotation) =>
   (a.url ?? "").localeCompare(b.url ?? "");
 
-const expectedText = `Hyphenator.js
+const expectedText = [
+  `Hyphenator.js
 Overview
 Hyphenator.js is a free open source Javascript library that automatically hyphenates text
 on websites. It comes in handy as a polyfill for legacy browsers that don't support CSS 3
@@ -38,8 +39,8 @@ Hyphenator.js)
 Get detailed instructions.
 The bad parts
 As with most things, there's a downside, too. Consider the following drawbacks before
-using Hyphenator.js:
-Hyphenator.js and the hyphenation patterns are quite large. A good compression and caching
+using Hyphenator.js:`,
+  `Hyphenator.js and the hyphenation patterns are quite large. A good compression and caching
 is vital.
 Automatic hyphenation can not be perfect: it may lead to misleading hyphenation like leg-ends
 (depends on the pattern quality)
@@ -74,7 +75,8 @@ have precedence…
 Franklin Mark Liang for his beautiful hyphenation algorithm
 Douglas Crockford for making Javascript a programming language
 Vyacheslav Egorov for his deep insights to V8
-Bram Stein for his initiative on web typography`;
+Bram Stein for his initiative on web typography`,
+];
 
 const expectedTotalAnnotations = [
   {

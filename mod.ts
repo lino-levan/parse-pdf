@@ -10,7 +10,8 @@ export interface ParsedPdf<T = false> {
   numPages: number;
   info: object | null;
   metadata: Metadata | null;
-  text: string;
+  /** Text, split by page of PDF */
+  text: string[];
   annotations: T extends true ? Annotation[] : undefined;
 }
 
@@ -98,7 +99,7 @@ export default async function parsePdf<T extends boolean = false>(
     numPages: doc.numPages,
     info,
     metadata,
-    text: pageTexts.join("\n"),
+    text: pageTexts,
     annotations:
       (options?.includeAnnotations ? annotations : undefined) as T extends true
         ? Annotation[]
